@@ -50,6 +50,15 @@ new_captain = f"""
 Привет, я тебя ещё не знаю! Рейдов ты не создавал ещё. Воспользуйся командой `{PREFIX}капитан`
 """
 
+can_delete_self_raid = """
+Ты действительно хочешь удалить созданный тобой рейд? 
+"""
+
+can_delete_self_raids = "Какой из твоих созданных рейдов мне нужно удалить?\n"
+
+raid_parameters = "{number}) Отплытие в {time_leaving} на {server}.\n"
+
+
 # messages for command cap, where bot ask user.
 
 raid_create_choice_start = "Какой из рейдов мне создать, капитан **{captain_name}**?\n"
@@ -146,7 +155,7 @@ section_title = 'Разделы команд'
 
 about_author = """
 Бот был сделан **Gliger#7748** (Андрей).
-Версия бота: **2.1.1**.
+Версия бота: **2.2.1pre**.
 Сделан на Python, исходный код можно увидеть на https://github.com/Gliger13/bdo_daily_bot.
 Приглашение в Сообщество Бартерят - https://discord.gg/VaEsRTc
 """

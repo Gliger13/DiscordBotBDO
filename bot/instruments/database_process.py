@@ -231,6 +231,9 @@ class CaptainCollection(metaclass=MetaSingleton):
         captain_post = self.find_captain_post(user)
         return captain_post.get('last_raids')
 
+    def get_captain_name_by_user(self, user: str) -> str or None:
+        return self.find_captain_post(user).get('captain_name')
+
 
 class SettingsCollection(metaclass=MetaSingleton):
     _collection = None

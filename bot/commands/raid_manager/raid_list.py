@@ -113,6 +113,13 @@ class RaidList(metaclass=MetaSingleton):
             return
         return raids_found.pop()
 
+    def find_raids_by_captain_name(self, captain_name: str) -> list:
+        """
+        Return all Raid's as list by captain_name
+        """
+        raids_found = [some_raid for some_raid in self.active_raids if some_raid.captain_name == captain_name]
+        return raids_found
+
     def is_correct_join(self, nickname: str, time_leaving: str) -> bool:
         """
         Checking the necessary conditions for joining the raid.

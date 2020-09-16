@@ -108,10 +108,107 @@ class RaidCreation(commands.Cog):
 
         log_template.notify_success(current_raid.raid_time.time_leaving, amount + 1)
 
+    async def remove_self_raid(self, ctx: Context):
+        captain_name = self.database.captain.get_captain_name_by_user(str(ctx.author))
+
+        if not captain_name:
+            await ctx.message.add_reaction('❌')
+            log_template.command_fail(ctx, logger_msgs.captain_not_exist)
+            return
+
+        current_raids = self.raid_list.find_raids_by_captain_name(captain_name)
+
+        if not current_raids:
+            await ctx.message.add_reaction('❌')
+            log_template.command_fail(ctx, logger_msgs.raid_not_found)
+            return
+
+        if len(current_raids) == 1:
+            choices = {
+                '✔': True,
+                '❌': False
+            }
+
+            def check(reaction, user):
+                """Only get answer by author of command and correct reaction"""
+                return user == ctx.message.author and str(reaction.emoji in choices.keys())
+
+            current_raid = current_raids[0]
+
+            question_msg = await ctx.send(messages.can_delete_self_raid)
+            # Add reaction choices
+            [await question_msg.add_reaction(emoji) for emoji in choices.keys()]
+
+            try:
+                # Wait for user answer
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=300.0, check=check)
+            except asyncio.TimeoutError:
+                log_template.command_fail(ctx, logger_msgs.user_not_response)
+                await ctx.message.add_reaction('❌')
+            else:
+                emoji = str(reaction.emoji)
+                answer = choices[emoji]
+
+                log_template.user_answer(ctx, emoji)
+
+                if answer:
+                    current_raid.end_work()
+                    self.raid_list.remove(current_raid)
+
+                    await ctx.message.add_reaction('✔')
+                    log_template.command_success(ctx)
+                else:
+                    await ctx.message.add_reaction('❌')
+
+        else:
+            choices = {
+                '1️⃣': 1, '2️⃣': 2, '3️⃣': 3, '4️⃣️': 4, '5️⃣': 5
+            }
+
+            def check(reaction, user):
+                """Only get answer by author of command and correct reaction"""
+                return user == ctx.message.author and str(reaction.emoji in choices.keys())
+
+            question_msg_content = messages.can_delete_self_raids
+
+            # Create choices message to user with all his raids
+            raids_information = []
+            for number, some_raid in enumerate(current_raids):
+                raids_information.append(
+                    messages.raid_parameters.format(
+                        number=number + 1, time_leaving=some_raid.raid_time.time_leaving, server=some_raid.server
+                    )
+                )
+
+            question_msg_content = ''.join((question_msg_content, *raids_information))
+
+            question_msg = await ctx.send(question_msg_content)
+            # Add reaction choices
+            [await question_msg.add_reaction(emoji) for emoji in list(choices.keys())[:len(current_raids)]]
+
+            try:
+                # Wait for user answer
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=300.0, check=check)
+            except asyncio.TimeoutError:
+                log_template.command_fail(ctx, logger_msgs.user_not_response)
+                await ctx.message.add_reaction('❌')
+            else:
+                emoji = str(reaction.emoji)
+                answer = choices[emoji]
+                current_raid = current_raids[answer - 1]
+
+                log_template.user_answer(ctx, emoji)
+
+                current_raid.end_work()
+                self.raid_list.remove(current_raid)
+
+                await ctx.message.add_reaction('✔')
+                log_template.command_success(ctx)
+
     @commands.command(name=command_names.function_command.remove_raid, help=help_text.remove_raid)
     @commands.guild_only()
     @commands.has_role('Капитан')
-    async def remove_raid(self, ctx: Context, captain_name: str, time_leaving=''):
+    async def remove_raid(self, ctx: Context, captain_name='', time_leaving=''):
         """
         Remove available raid
 
@@ -124,6 +221,11 @@ class RaidCreation(commands.Cog):
         """
         # Checking correct inputs arguments
         await check_input.validation(**locals())
+
+        # If no parameters than try to remove user raid.
+        if not captain_name:
+            await self.remove_self_raid(ctx)
+            return
 
         curr_raid = self.raid_list.find_raid(ctx.guild.id, ctx.channel.id, captain_name, time_leaving)
         if curr_raid:
