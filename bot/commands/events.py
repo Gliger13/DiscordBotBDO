@@ -5,6 +5,7 @@ import traceback
 import discord
 from discord.ext import commands
 
+from instruments import database_process
 from messages import messages, logger_msgs
 from settings import settings
 from settings.logger import log_template
@@ -14,8 +15,9 @@ module_logger = logging.getLogger('my_bot')
 
 class Events(commands.Cog):
     """
-       Cog that responsible for various events.
+    Cog that responsible for various events.
     """
+    database = database_process.DatabaseManager()
 
     def __init__(self, bot):
         self.bot = bot
@@ -132,12 +134,20 @@ class Events(commands.Cog):
         # Check if is reaction for get role
         await self.add_role_from_reaction(payload)
 
-        # Check if is reaction for get in raid
-        joining = self.bot.get_cog('RaidJoining')
-        channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
         user = self.bot.get_user(payload.user_id)
-        await joining.raid_reaction_add(message, payload.emoji, user)
+        emoji = str(payload.emoji)
+        channel = self.bot.get_channel(payload.channel_id)
+
+        # If user react in dm channel
+        if isinstance(channel, discord.channel.DMChannel):
+            if emoji == '💤':
+                await self.not_notify_me(user)
+        else:  # If user react in text channel on server
+            message = await channel.fetch_message(payload.message_id)
+
+            # Check if is reaction for get in raid
+            joining = self.bot.get_cog('RaidJoining')
+            await joining.raid_reaction_add(message, payload.emoji, user)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
@@ -147,12 +157,41 @@ class Events(commands.Cog):
         # Check if is reaction for get role
         await self.remove_role_from_reaction(payload)
 
-        # Check if is reaction for get in raid
-        joining = self.bot.get_cog('RaidJoining')
-        channel = self.bot.get_channel(payload.channel_id)
-        message = await channel.fetch_message(payload.message_id)
         user = self.bot.get_user(payload.user_id)
-        await joining.raid_reaction_remove(message, payload.emoji, user)
+        emoji = str(payload.emoji)
+        channel = self.bot.get_channel(payload.channel_id)
+
+        # If user react in dm channel
+        if isinstance(channel, discord.channel.DMChannel):
+            if emoji == '💤':
+                await self.notify_me(user)
+        else:  # If user react in text channel on server
+            message = await channel.fetch_message(payload.message_id)
+
+            # Check if is reaction for get in raid
+            joining = self.bot.get_cog('RaidJoining')
+            await joining.raid_reaction_remove(message, payload.emoji, user)
+
+    async def not_notify_me(self, user):
+        nickname = self.database.user.find_user(str(user))
+
+        if not nickname:
+            return
+
+        self.database.user.notify_off(str(user))
+
+        await user.send(messages.notification_off)
+        log_template.user_notification_on(user)
+
+    async def notify_me(self, user):
+        nickname = self.database.user.find_user(str(user))
+
+        if not nickname:
+            return
+
+        self.database.user.notify_on(str(user))
+        await user.send(messages.notification_on)
+        log_template.user_notification_off(user)
 
 
 def setup(bot):

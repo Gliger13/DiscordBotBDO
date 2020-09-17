@@ -82,3 +82,11 @@ def reaction(guild, channel, user, emoji, msg):
 def notify_success(time_leaving, amount):
     log = logger_msgs.notify_success.format(time_leaving=time_leaving, amount=amount)
     module_logger.info(log)
+
+def user_notification_on(user):
+    log = logger_msgs.user_notification_on.format(user=user)
+    module_logger.info(log)
+
+def user_notification_off(user):
+    log = logger_msgs.user_notification_off.format(user=user)
+    module_logger.info(log)

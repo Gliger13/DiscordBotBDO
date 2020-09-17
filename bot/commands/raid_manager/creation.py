@@ -80,6 +80,14 @@ class RaidCreation(commands.Cog):
         current_raid: Raid
             raid to notification
         """
+
+        async def first_notification(member, user):
+            was_first_notified = member.get('first_notification')
+            if not was_first_notified:
+                notification_msg = await user.send(messages.notification_warning)
+                self.database.user.first_notification(str(user))
+                await notification_msg.add_reaction('💤')
+
         # Get secs left to notification
         secs_sleep = current_raid.raid_time.secs_to_notify()
 
@@ -96,17 +104,24 @@ class RaidCreation(commands.Cog):
         amount = 0
         # Send notification msg to users
         for member in users_list:
-            if member:
+            if member and not member.get('not_notify'):
                 user = self.bot.get_user(member.get('discord_id'))
+
                 await user.send(messages.member_notification)
                 amount += 1
 
-        # Send notification message to the captain
-        captain_id = self.database.user.user_post_by_name(current_raid.captain_name).get('discord_id')
-        captain = self.bot.get_user(captain_id)
-        await captain.send(messages.captain_notification)
+                await first_notification(member, user)
 
-        log_template.notify_success(current_raid.raid_time.time_leaving, amount + 1)
+        # Send notification message to the captain
+        captain_post = self.database.user.user_post_by_name(current_raid.captain_name)
+        captain = self.bot.get_user(captain_post.get('discord_id'))
+        if not captain_post.get('not_notify'):
+            await captain.send(messages.captain_notification)
+            amount += 1
+
+            await first_notification(captain_post, captain)
+
+        log_template.notify_success(current_raid.raid_time.time_leaving, amount)
 
     async def remove_self_raid(self, ctx: Context):
         captain_name = self.database.captain.get_captain_name_by_user(str(ctx.author))

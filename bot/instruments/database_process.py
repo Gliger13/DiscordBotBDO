@@ -128,6 +128,48 @@ class UserCollection(metaclass=MetaSingleton):
             'nickname': name
         })
 
+    def notify_off(self, user: str):
+        self.collection.find_one_and_update(
+            {
+                'discord_user': str(user)
+            },
+            {
+                '$set': {
+                    'not_notify': True
+                }
+            }
+        )
+
+    def notify_on(self, user: str):
+        self.collection.find_one_and_update(
+            {
+                'discord_user': str(user)
+            },
+            {
+                '$set': {
+                    'not_notify': False
+                }
+            }
+        )
+
+    def notify_status(self, user: str):
+        return self.find_user_post(user).get('notify')
+
+    def first_notification(self, user: str):
+        self.collection.find_one_and_update(
+            {
+                'discord_user': str(user)
+            },
+            {
+                '$set': {
+                    'first_notification': True
+                }
+            }
+        )
+
+    def first_notification_status(self, user: str):
+        return self.find_user_post(user).get('first_notification')
+
     def get_users_id(self, user_list):
         post = self.collection.find(
             {
@@ -137,6 +179,7 @@ class UserCollection(metaclass=MetaSingleton):
             },
             {
                 'discord_id': 1,
+                'notify': 1,
                 '_id': 0,
             }
         )
