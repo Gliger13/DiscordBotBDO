@@ -106,13 +106,11 @@ already_joined = """
 
 active_raids_start = "В данный момент собирают рейды:\n"
 active_raid_all = (
-    "В текстовом канале **{channel_name}** - капитан **{captain_name}** на канале **{server}** выплывает "
+    "#**{channel_name}** - капитан **{captain_name}** на канале **{server}** будет выплывать "
     "в **{time_leaving}**."
 )
 
-active_raid_hide = """**{guild_name}/{channel_name}** - капитан **{curr_raid.captain_name}**
-выплывает в **{time_leaving}**.
-"""
+active_raid_hide = "**{guild_name}/{channel_name}** - капитан **{captain_name}** выплывает в **{time_leaving}**."
 
 no_active_raids = "В данный момент никто здесь не собирает рейды, или собирают, но не через меня :cry:"
 

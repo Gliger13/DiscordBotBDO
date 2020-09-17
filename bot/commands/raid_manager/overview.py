@@ -35,8 +35,9 @@ class RaidOverview(commands.Cog):
         log_template.command_success(ctx)
 
         if not show_all:
+            print(bool(self.raid_list))
             # Check raids exist
-            if self.raid_list:
+            if not self.raid_list:
                 await ctx.send(messages.no_active_raids)
                 return
 
@@ -53,7 +54,7 @@ class RaidOverview(commands.Cog):
 
         else:
             # Check raids exist
-            if self.raid_list:
+            if not self.raid_list:
                 await ctx.send(messages.no_active_raids)
                 return
 
