@@ -434,7 +434,9 @@ class Table:
         else:
             os.mkdir('images')
 
-        self.table_path = os.path.join('images', 'raid_') + str(self.raid.raid_time.time_leaving) + ".png"
+        self.table_path = os.path.join(
+            'images', self.raid.captain_name + '_' + str(self.raid.raid_time.time_leaving) + ".png"
+        )
         cv2.imwrite(self.table_path, img)
 
     def create_text_table(self):
