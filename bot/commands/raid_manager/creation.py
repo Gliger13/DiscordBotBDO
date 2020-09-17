@@ -496,7 +496,6 @@ class RaidCreation(commands.Cog):
             user_choice = NUMBER_REACTIONS[emoji]
 
             user_raid = last_raids[user_choice - 1]
-            await self.check_raid_exists(ctx, captain_post.get('captain_name'), user_raid.get('time_leaving'))
             await self.captain(
                 ctx,
                 captain_post.get('captain_name'),
