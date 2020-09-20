@@ -17,7 +17,11 @@ command_error = "{user} совершил ошибку в команде '{comman
 
 unknown_command_error = "{user} совершил неизвестную ошибку в команде '{command}."
 
-role_from_reaction = "{guild}: {user} {'получил' if is_get else 'убрал'} роль {role} через реакцию {reaction}."
+role_remove_from_reaction = "{guild}: {user} убрал роль {role} через реакцию {reaction}."
+
+role_add_from_reaction = "{guild}: {user} получил роль {role} через реакцию {reaction}."
+
+remove_reaction_fail = "Не удалось найти реакцию."
 
 reaction = "{guild}/{channel}: {user} использовал реакцию {emoji}. {msg}."
 
@@ -36,6 +40,10 @@ user_notification_off = "{user} отключил оповещение о ско�
 command_not_found = 'Команда не найдена'
 
 wrong_channel = 'Неправильный канал'
+
+# ============================== commands.admin ===============================
+
+role_not_exist = 'Такая роль не найдена'
 
 # ============================== commands.raid_manager.creation ===============================
 

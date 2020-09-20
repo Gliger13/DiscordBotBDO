@@ -72,7 +72,7 @@ class Events(commands.Cog):
         elif isinstance(error, commands.errors.UserInputError):
             await ctx.message.add_reaction('❓')
         elif isinstance(error, commands.errors.MissingRole):
-            await ctx.message.add_reaction('⛔️')
+            await ctx.message.add_reaction('⛔')
         else:
             # If this is an unknown error
             log_template.unknown_command_error(ctx, error)
@@ -84,53 +84,69 @@ class Events(commands.Cog):
         """
         Give user a role by clicking reaction on message
         """
-        # Is correct guild, message and reaction?
-        if (
-                payload.guild_id != settings.MAIN_GUILD_ID or
-                payload.message_id != settings.ROLE_MANAGER_MESSAGE_ID or
-                str(payload.emoji) not in settings.ROLE_EMOJI
-        ):
+        guild_settings = self.database.settings.find_settings_post(payload.guild_id)
+
+        if not guild_settings:
             return
 
-        emoji = str(payload.emoji)
-        guild = self.bot.get_guild(payload.guild_id)
-        member = payload.member
+        role_from_reaction = guild_settings.get('role_from_reaction')
 
-        role = discord.utils.get(guild.roles, name=settings.ROLE_EMOJI[emoji])
+        if not role_from_reaction:
+            return
 
-        # Send warning of role to user
-        if emoji == '🔑':
-            await member.send(messages.NSFW_warning)
+        reaction = str(payload.emoji)
+        reaction_role = role_from_reaction.get('reaction_role')
 
-        await member.add_roles(role)
-        log_template.role_from_reaction(guild, member, role, emoji, is_get=True)
+        if (
+            payload.message_id == role_from_reaction.get('message_id') and
+            reaction in reaction_role
+        ):
+            guild = self.bot.get_guild(payload.guild_id)
+            member = payload.member
+
+            role = discord.utils.get(guild.roles, id=reaction_role[reaction])
+            await member.add_roles(role)
+
+            log_template.role_add_from_reaction(guild, member, role, reaction)
 
     async def remove_role_from_reaction(self, payload: discord.RawReactionActionEvent):
         """
         Remove the role of user by clicking reaction on message.
         """
-        # Is correct guild, message and reaction?
-        if (
-                payload.guild_id != settings.MAIN_GUILD_ID or
-                payload.message_id != settings.ROLE_MANAGER_MESSAGE_ID or
-                str(payload.emoji) not in settings.ROLE_EMOJI
-        ):
+
+        guild_settings = self.database.settings.find_settings_post(payload.guild_id)
+
+        if not guild_settings:
             return
 
-        emoji = str(payload.emoji)
-        guild = self.bot.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
+        role_from_reaction = guild_settings.get('role_from_reaction')
 
-        role = discord.utils.get(guild.roles, name=settings.ROLE_EMOJI[emoji])
+        if not role_from_reaction:
+            return
 
-        await member.remove_roles(role)
-        log_template.role_from_reaction(guild, member, role, emoji, is_get=False)
+        reaction = str(payload.emoji)
+        reaction_role = role_from_reaction.get('reaction_role')
+
+        if (
+                payload.message_id == role_from_reaction.get('message_id') and
+                reaction in reaction_role
+        ):
+            guild = self.bot.get_guild(payload.guild_id)
+            member = guild.get_member(payload.user_id)
+
+            role = discord.utils.get(guild.roles, id=reaction_role[reaction])
+            await member.remove_roles(role)
+
+            log_template.role_remove_from_reaction(guild, member, role, reaction)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         """
         Process all reaction that added by user.
         """
+        if payload.user_id == settings.BOT_ID:
+            return
+
         # Check if is reaction for get role
         await self.add_role_from_reaction(payload)
 
@@ -154,6 +170,9 @@ class Events(commands.Cog):
         """
         Process all reaction that removed by user.
         """
+        if payload.user_id == settings.BOT_ID:
+            return
+
         # Check if is reaction for get role
         await self.remove_role_from_reaction(payload)
 

@@ -89,6 +89,50 @@ class Admin(commands.Cog):
         await channel.delete_messages(messages_to_remove)
         log_template.command_success(ctx)
 
+    @commands.command(name=command_names.function_command.set_reaction_for_role, help=help_text.set_reaction_for_role)
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def set_reaction_for_role(self, ctx: Context, channel_id: int, message_id: int, reaction, *role_name):
+        role_name = ' '.join(role_name)
+
+        channel = self.bot.get_channel(channel_id)
+        message = await channel.fetch_message(message_id)
+
+        # Check input role exists
+        roles = [role for role in ctx.guild.roles if role.name == role_name]
+
+        await message.add_reaction(reaction)
+
+        if not roles:
+            await ctx.message.add_reaction('❌')
+            log_template.command_fail(ctx, logger_msgs.role_not_exist)
+            return
+
+        if len(roles) == 1:
+            role = roles[0]
+
+            self.database.settings.set_reaction_by_role(
+                ctx.guild.id, str(ctx.guild), message.id, reaction, role.id,
+            )
+
+            await ctx.message.add_reaction('✔')
+            log_template.command_success(ctx)
+
+    @commands.command(
+        name=command_names.function_command.remove_reaction_for_role, help=help_text.remove_reaction_for_role
+    )
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def remove_reaction_for_role(self, ctx: Context, reaction):
+        result = self.database.settings.remove_reaction_from_role(ctx.guild.id, reaction)
+
+        if result:
+            await ctx.message.add_reaction('✔')
+            log_template.command_success(ctx)
+        else:
+            await ctx.message.add_reaction('❌')
+            log_template.command_fail(ctx, logger_msgs.remove_reaction_fail)
+
 
 def setup(bot):
     bot.add_cog(Admin(bot))

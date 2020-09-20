@@ -31,6 +31,8 @@ function_command = FunctionCommand({
     'save_raids': 'сохрани_рейды',
     'save_raid': 'сохрани_рейд',
     # commands.admin
+    'set_reaction_for_role': 'получение_роли',
+    'remove_reaction_for_role': 'удаление_роли',
     'remove_there': 'удалять_тут',
     'remove_msgs': 'очисти_чат',
     'not_remove_there': 'не_удалять',

@@ -69,8 +69,13 @@ def unknown_command_error(ctx, error):
     module_logger.error(log)
 
 
-def role_from_reaction(guild, user, role: str, emoji: str, is_get: bool):
-    log = logger_msgs.role_from_reaction(guild=guild, user=user, role=role, reaction=emoji, is_get=is_get)
+def role_add_from_reaction(guild, user, role: str, emoji: str):
+    log = logger_msgs.role_add_from_reaction.format(guild=guild, user=user, role=role, reaction=emoji)
+    module_logger.info(log)
+
+
+def role_remove_from_reaction(guild, user, role: str, emoji: str):
+    log = logger_msgs.role_add_from_reaction.format(guild=guild, user=user, role=role, reaction=emoji)
     module_logger.info(log)
 
 
@@ -83,9 +88,11 @@ def notify_success(time_leaving, amount):
     log = logger_msgs.notify_success.format(time_leaving=time_leaving, amount=amount)
     module_logger.info(log)
 
+
 def user_notification_on(user):
     log = logger_msgs.user_notification_on.format(user=user)
     module_logger.info(log)
+
 
 def user_notification_off(user):
     log = logger_msgs.user_notification_off.format(user=user)

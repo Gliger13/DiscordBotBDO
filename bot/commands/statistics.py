@@ -140,11 +140,29 @@ class Statistics(commands.Cog):
         guild_info = self.database.settings.find_settings_post(guild.id)
 
         # Collect all information from db
-        text_message = messages.no_data
-        if guild_info and guild_info.get('can_remove_in_channels'):
-            text_message = messages.can_remove_msgs_in
-            for channel_id, channel in guild_info.get('can_remove_in_channels').items():
-                text_message += f" - **{channel}**\n"
+
+        if guild_info:
+            text_message = ''
+
+            # Information about getting role from clicking reaction
+            role_from_reaction = guild_info.get('role_from_reaction')
+            if role_from_reaction:
+                text_message = messages.can_get_role_from.format(
+                    message_id=role_from_reaction.get('message_id')
+                )
+                for emoji, role_id in role_from_reaction.get('reaction_role').items():
+                    role = discord.utils.get(guild.roles, id=role_id)
+                    text_message += messages.reaction_role.format(
+                        role=role, emoji=emoji
+                    )
+
+            # Information about ability to remove channels
+            if guild_info and guild_info.get('can_remove_in_channels'):
+                text_message += messages.can_remove_msgs_in
+                for channel_id, channel in guild_info.get('can_remove_in_channels').items():
+                    text_message += f" - *#{channel}*\n"
+        else:
+            text_message = messages.no_data
 
         embed = discord.Embed(
             title=messages.statistics_guild_title,
