@@ -8,6 +8,7 @@ import cv2
 import discord
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
+from discord.ext.commands import CommandInvokeError
 
 from messages import messages
 
@@ -482,6 +483,9 @@ class RaidMsgs:
             table_msg = await self._send_table_msg(ctx)
         else:
             table_msg = await self._get_msg(bot, self.table_msg_id)
-            await table_msg.delete()
+            try:
+                await table_msg.delete()
+            except CommandInvokeError:
+                pass
             table_msg = await self._send_table_msg(ctx)
         self.table_msg_id = table_msg.id
