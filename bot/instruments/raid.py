@@ -8,7 +8,7 @@ import cv2
 import discord
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
-from discord.ext.commands import CommandInvokeError
+from discord.errors import NotFound
 
 from messages import messages
 
@@ -482,10 +482,10 @@ class RaidMsgs:
         if not self.table_msg_id:
             table_msg = await self._send_table_msg(ctx)
         else:
-            table_msg = await self._get_msg(bot, self.table_msg_id)
             try:
+                table_msg = await self._get_msg(bot, self.table_msg_id)
                 await table_msg.delete()
-            except CommandInvokeError:
+            except NotFound:
                 pass
             table_msg = await self._send_table_msg(ctx)
         self.table_msg_id = table_msg.id
