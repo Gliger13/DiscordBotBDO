@@ -148,7 +148,9 @@ class RaidJoining(commands.Cog):
 
             # Add user into raid
             smaller_raid += name
-            await smaller_raid.raid_msgs.update_coll_msg(self.bot)
+
+            if smaller_raid.raid_msgs.collection_msg_id:
+                await smaller_raid.raid_msgs.update_coll_msg(self.bot)
 
             await ctx.message.add_reaction('✔')
 
