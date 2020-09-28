@@ -482,7 +482,7 @@ class RaidCreation(commands.Cog):
                     time_reservation_open=last_raid['time_reservation_open']
                 )
             if last_raid.get('reservation_count') and not last_raid['reservation_count'] == 1:
-                raids_msg += messages.raid_create_choice_count.format(reservtaion_count=last_raid['reservation_count'])
+                raids_msg += messages.raid_create_choice_count.format(reservation_count=last_raid['reservation_count'])
             raids_msg += '.\n'
 
         # Send list of choices and add controlling reactions
