@@ -168,12 +168,13 @@ class RaidJoining(commands.Cog):
             return
 
         if name in curr_raid:
+            await ctx.author.send(messages.already_joined)
             await ctx.message.add_reaction('❌')
             log_template.command_fail(ctx, logger_msgs.already_in_raid)
             return
 
         # if user already in the same raid
-        if self.raid_list.is_correct_join(name, time_leaving):
+        if not self.raid_list.is_correct_join(name, time_leaving):
             await ctx.author.send(messages.already_joined)
             await ctx.message.add_reaction('❌')
             log_template.command_fail(ctx, logger_msgs.already_in_same_raid)
