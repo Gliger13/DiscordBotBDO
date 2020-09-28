@@ -4,7 +4,6 @@ from settings.settings import PREFIX
 
 yours_current_raids_start = """
 Ваши текущие рейды:
-"дискорд сервер/текстовый канал/сервер/время отплытия
 """
 
 member_notification = """
@@ -110,7 +109,7 @@ already_joined = """
 
 active_raids_start = "В данный момент собирают рейды:\n"
 active_raid_all = (
-    "#**{channel_name}** - капитан **{captain_name}** на канале **{server}** будет выплывать "
+    "**{channel_name}** - капитан **{captain_name}** на канале **{server}** будет выплывать "
     "в **{time_leaving}**."
 )
 

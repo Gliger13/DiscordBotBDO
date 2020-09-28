@@ -35,7 +35,6 @@ class RaidOverview(commands.Cog):
         log_template.command_success(ctx)
 
         if not show_all:
-            print(bool(self.raid_list))
             # Check raids exist
             if not self.raid_list:
                 await ctx.send(messages.no_active_raids)
@@ -45,12 +44,12 @@ class RaidOverview(commands.Cog):
             msg_of_raid = messages.active_raids_start
             for curr_raid in self.raid_list:
                 if ctx.guild.id == curr_raid.guild_id:
-                    channel_name = str(self.bot.get_channel(curr_raid.channel_id))
+                    channel = self.bot.get_channel(curr_raid.channel_id)
                     msg_of_raid += messages.active_raid_all.format(
-                        channel_name=channel_name, captain_name=curr_raid.captain_name,
+                        channel_name=channel.mention, captain_name=curr_raid.captain_name,
                         server=curr_raid.server, time_leaving=curr_raid.raid_time.time_leaving,
-                    )
-                await ctx.send(msg_of_raid)
+                    ) + '\n'
+            await ctx.send(msg_of_raid)
 
         else:
             # Check raids exist
@@ -66,7 +65,7 @@ class RaidOverview(commands.Cog):
                 msg_of_raid += messages.active_raid_hide.format(
                     guild_name=guild_name, channel_name=channel_name,
                     captain_name=curr_raid.captain_name, time_leaving=curr_raid.raid_time.time_leaving,
-                )
+                ) + '\n'
             await ctx.send(msg_of_raid)
 
     @commands.command(name=command_names.function_command.show_text_raids, help=help_text.show_text_raids)
