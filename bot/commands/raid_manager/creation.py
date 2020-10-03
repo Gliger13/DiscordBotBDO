@@ -6,8 +6,9 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from commands.raid_manager import raid_list
-from instruments import check_input, raid, database_process, tools
-from instruments.raid import Raid, RaidMsgs
+from instruments import check_input, database_process, tools
+from instruments.raid.raid import Raid
+from instruments.raid.raid_coll_msg import RaidCollMsg
 from messages import command_names, help_text, messages, logger_msgs
 from settings.logger import log_template
 
@@ -316,7 +317,7 @@ class RaidCreation(commands.Cog):
 
         log_template.command_success(ctx)
 
-    async def raid_time_process(self, ctx: Context, curr_raid: Raid, raid_coll_msg: RaidMsgs):
+    async def raid_time_process(self, ctx: Context, curr_raid: Raid, raid_coll_msg: RaidCollMsg):
         # Remove the time that has already passed
         curr_raid.raid_time.validate_time()
 
@@ -444,7 +445,7 @@ class RaidCreation(commands.Cog):
         if not time_reservation_open:
             time_reservation_open = tools.now_time_plus_minute()
 
-        new_raid = raid.Raid(
+        new_raid = Raid(
             captain_name,
             server,
             time_leaving,

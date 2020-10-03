@@ -6,7 +6,8 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from commands.raid_manager import raid_list
-from instruments import check_input, raid
+from instruments import check_input
+from instruments.raid.raid import Raid
 from messages import command_names, help_text, logger_msgs
 from settings.logger import log_template
 
@@ -48,7 +49,7 @@ class RaidSaveLoad(commands.Cog):
         # Open file and load information in new Raid
         with open(file_name, 'r', encoding='utf-8') as save_file:
             raid_information = json.load(save_file)
-        old_raid = raid.Raid(
+        old_raid = Raid(
             captain_name=raid_information['captain_name'],
             server=raid_information['server'],
             time_leaving=raid_information['time_leaving'],
@@ -60,7 +61,6 @@ class RaidSaveLoad(commands.Cog):
         old_raid.raid_time.time_to_display = raid_information['time_to_display']
         old_raid.raid_time.secs_to_display = raid_information['secs_to_display']
         old_raid.member_dict.update(raid_information['members_dict'])
-        old_raid.members_count = raid_information['members_count']
         self.raid_list.append(old_raid)
 
         await ctx.message.add_reaction('✔')

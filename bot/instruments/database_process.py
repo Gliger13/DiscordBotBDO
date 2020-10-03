@@ -4,7 +4,7 @@ import logging
 from pymongo import MongoClient
 
 from instruments import tools
-from instruments.raid import Raid
+from instruments.raid.raid import Raid
 from instruments.tools import MetaSingleton
 from settings import settings
 

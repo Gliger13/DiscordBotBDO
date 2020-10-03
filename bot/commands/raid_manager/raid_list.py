@@ -1,7 +1,6 @@
 import logging
 
-from instruments import raid
-from instruments.raid import Raid
+from instruments.raid.raid import Raid
 from instruments.tools import MetaSingleton
 
 module_logger = logging.getLogger('my_bot')
@@ -65,7 +64,7 @@ class RaidList(metaclass=MetaSingleton):
         return available_raids
 
     def find_raid(self, guild_id: int, channel_id: int, captain_name='', time_leaving='',
-                  ignore_channels=False) -> raid.Raid or None:
+                  ignore_channels=False) -> Raid or None:
         """
         Return list of raids by specific discord guild and channel, captain name and time leaving.
 
