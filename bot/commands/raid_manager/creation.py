@@ -63,12 +63,13 @@ class RaidCreation(commands.Cog):
 
         msg = messages.yours_current_raids_start
         for captain_raid in current_raids:
-            guild_name = str(self.bot.get_guild(captain_raid.guild_id))
-            channel_name = str(self.bot.get_channel(captain_raid.channel_id))
-            msg += (
-                f"**{guild_name}**/**{channel_name}**/"
-                f"**{captain_raid.server}**/**{captain_raid.raid_time.time_leaving}**\n"
-            )
+            for raid_coll_msg in captain_raid.raid_coll_msgs.values():
+                guild_name = str(self.bot.get_guild(raid_coll_msg.guild_id))
+                channel_name = str(self.bot.get_channel(raid_coll_msg.channel_id))
+                msg += (
+                    f"**{guild_name}**/**{channel_name}**/"
+                    f"**{captain_raid.server}**/**{captain_raid.raid_time.time_leaving}**\n"
+                )
         return msg
 
     async def notify_about_leaving(self, current_raid: Raid):
