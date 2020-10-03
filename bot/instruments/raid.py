@@ -26,8 +26,6 @@ class Raid:
         self.raid_time = RaidTime(time_leaving, time_reservation_open)
         self.reservation_count = max(int(reservation_count), 1)
 
-        self.members_count = self.reservation_count
-
         self.table = None
 
         self.raid_coll_msgs = {}
@@ -42,14 +40,12 @@ class Raid:
     def __iadd__(self, name_new_member):
         if self.places_left == 0:
             return False
-        self.members_count += 1
         self.member_dict.update({name_new_member: self.members_count})
         return self
 
     def __isub__(self, name_remove_member):
         if self.member_dict.get(name_remove_member):
             del self.member_dict[name_remove_member]
-            self.members_count -= 1
             return self
         else:
             return False
@@ -70,6 +66,10 @@ class Raid:
 
     def __contains__(self, member_name: str):
         return member_name in self.member_dict.keys()
+
+    @property
+    def members_count(self) -> int:
+        return self.reservation_count + len(self.member_dict)
 
     @property
     def places_left(self) -> int:
@@ -341,6 +341,7 @@ class Table:
     def __init__(self, raid: Raid):
         self.raid = raid
         self.old_member_dict = self.raid.member_dict.copy()
+        self.old_reservation_count = self.raid.reservation_count
         self.title = f"{self.raid.captain_name} {self.raid.server} {self.raid.raid_time.time_leaving}"
         self.table_path = None
 
@@ -426,9 +427,10 @@ class Table:
         return self.table_path
 
     def update_table(self, raid: Raid):
-        if not self.old_member_dict == raid.member_dict:
+        if not self.old_member_dict == raid.member_dict or not self.old_reservation_count == raid.reservation_count:
             self.__init__(raid)
             self.old_member_dict = raid.member_dict.copy()
+            self.old_reservation_count = raid.reservation_count
             self.create_table()
         else:
             return
@@ -494,8 +496,6 @@ class RaidMsgs:
             await collection_msg.edit(content=self.collection_text)
 
     async def update_table_msg(self, bot):
-        print(self.table_msg_id)
-
         if not self.table_msg_id:
             table_msg = await self._send_table_msg(bot)
         else:

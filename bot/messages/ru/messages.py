@@ -141,6 +141,7 @@ cog_names = {
     'Fun': 'фан',
     'Statistics': 'статистика',
     'RaidCreation': 'создание рейда',
+    'RaidManager': 'редактирование рейда',
     'RaidSaveLoad': 'загрузка/сохранение рейда',
     'RaidRegistration': 'регистрация',
     'RaidJoining': 'попадание в рейд',

@@ -9,7 +9,7 @@ from settings import settings
 
 # Uncomment this to use pyinstaller
 from commands import events, base, admin, fun, statistics
-from commands.raid_manager import creation, save_load, registration, joining, overview
+from commands.raid_manager import creation, manager, save_load, registration, joining, overview
 
 # Initialization logger
 from settings.logger import logger
@@ -35,6 +35,7 @@ bot.load_extension(f"commands.admin")
 bot.load_extension(f"commands.fun")
 bot.load_extension(f"commands.statistics")
 bot.load_extension(f"commands.raid_manager.creation")
+bot.load_extension(f"commands.raid_manager.manager")
 bot.load_extension(f"commands.raid_manager.save_load")
 bot.load_extension(f"commands.raid_manager.registration")
 bot.load_extension(f"commands.raid_manager.joining")

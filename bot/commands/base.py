@@ -98,7 +98,7 @@ class Base(commands.Cog):
             return
 
         # Dict of emoji for control custom help
-        HELP_EMODJI = ['🔼', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣']
+        HELP_EMODJI = ['🔼', '1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9️⃣']
         pages = {}
         # Cogs witch should not be shown in help
         not_help_cogs = ['Base', 'Events']

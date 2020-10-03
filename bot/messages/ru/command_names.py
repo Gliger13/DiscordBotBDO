@@ -16,6 +16,9 @@ function_command = FunctionCommand({
     'collection': 'сбор',
     'captain': 'капитан',
     'cap': 'кэп',
+    # commands.raid_manager.manager
+    'open_reservation': 'открой_бронь',
+    'close_reservation': 'закрой_бронь',
     # commands.raid_manager.joining
     'reserve': 'бронь',
     'remove_res': 'удали_бронь',
