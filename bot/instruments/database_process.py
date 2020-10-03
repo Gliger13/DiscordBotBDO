@@ -179,7 +179,8 @@ class UserCollection(metaclass=MetaSingleton):
             },
             {
                 'discord_id': 1,
-                'notify': 1,
+                'not_notify': 1,
+                'first_notification': 1,
                 '_id': 0,
             }
         )
