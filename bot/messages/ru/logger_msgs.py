@@ -61,7 +61,7 @@ captain_not_exist = 'Капитан не был найден'
 
 no_registration = 'Нету регистрации'
 
-already_in_raid = 'Уже в рейдею'
+already_in_raid = 'Уже в рейде'
 
 raid_is_full = 'Рейд заполнен'
 

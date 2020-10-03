@@ -55,7 +55,7 @@ class RaidList(metaclass=MetaSingleton):
         available_raids = []
         entered_raids = self._find_raids_by_nickname(name)
         for some_raid in self.active_raids:
-            if some_raid.guild_id != guild_id or some_raid.is_full or name in some_raid:
+            if guild_id not in some_raid.raid_coll_msgs or some_raid.is_full or name in some_raid:
                 continue
             for entered_raid in entered_raids:
                 if some_raid.raid_time.time_leaving == entered_raid.raid_time.time_leaving:
@@ -100,14 +100,18 @@ class RaidList(metaclass=MetaSingleton):
             return raids_found
 
         for some_raid in self.active_raids:
-            if ignore_channels or some_raid.guild_id == guild_id and some_raid.channel_id == channel_id:
-                if captain_name and time_leaving:
-                    if some_raid.captain_name == captain_name and some_raid.raid_time.time_leaving == time_leaving:
-                        raids_found.append(some_raid)
-                        break
-                else:
-                    if some_raid.captain_name == captain_name:
-                        raids_found.append(some_raid)
+            for raid_msg in some_raid.raid_coll_msgs.values():
+                if (
+                        ignore_channels or
+                        raid_msg.guild_id == guild_id and raid_msg.channel_id == channel_id
+                ):
+                    if captain_name and time_leaving:
+                        if some_raid.captain_name == captain_name and some_raid.raid_time.time_leaving == time_leaving:
+                            raids_found.append(some_raid)
+                            break
+                    else:
+                        if some_raid.captain_name == captain_name:
+                            raids_found.append(some_raid)
 
         if not len(raids_found) == 1:
             return
@@ -172,7 +176,7 @@ class RaidList(metaclass=MetaSingleton):
         if len(raids_find) == 1:
             return raids_find.pop()
 
-    def find_raid_by_coll_id(self, collection_msg_id: int) -> list or None:
+    def find_raid_by_coll_id(self, guild_id, collection_msg_id: int) -> list or None:
         """
         Return raid by discord collection message id.
 
@@ -182,5 +186,9 @@ class RaidList(metaclass=MetaSingleton):
             Discord id of collection message in which collect in a raid.
         """
         for some_raid in self.active_raids:
-            if some_raid.raid_msgs.collection_msg_id and some_raid.raid_msgs.collection_msg_id == collection_msg_id:
+            raid_coll_msg = some_raid.raid_coll_msgs.get(guild_id)
+            if (
+                    raid_coll_msg and
+                    raid_coll_msg.collection_msg_id and raid_coll_msg.collection_msg_id == collection_msg_id
+            ):
                 return some_raid

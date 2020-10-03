@@ -7,7 +7,7 @@ from discord.ext.commands import Context
 
 from commands.raid_manager import raid_list
 from instruments import check_input, raid, database_process, tools
-from instruments.raid import Raid
+from instruments.raid import Raid, RaidMsgs
 from messages import command_names, help_text, messages, logger_msgs
 from settings.logger import log_template
 
@@ -256,7 +256,7 @@ class RaidCreation(commands.Cog):
     @commands.command(name=command_names.function_command.collection, help=help_text.collection)
     @commands.guild_only()
     @commands.has_role('Капитан')
-    async def collection(self, ctx: Context, captain_name: str, time_leaving=''):
+    async def collection(self, ctx: Context, captain_name='', time_leaving=''):
         """
         Send collection messaged to current channel and
         allowed users to get into the raid by adding reaction on collection message.
@@ -271,6 +271,15 @@ class RaidCreation(commands.Cog):
         # Checking correct inputs arguments
         await check_input.validation(**locals())
 
+        # Get the name of the captain from db if not specified
+        if not captain_name:
+            captain_post = self.database.captain.find_captain_post(str(ctx.author))
+            if captain_post:
+                captain_name = captain_post['captain_name']
+            else:
+                return
+
+        # Try find the raid with this credentials
         curr_raid = self.raid_list.find_raid(
             ctx.guild.id, ctx.channel.id, captain_name, time_leaving, ignore_channels=True
         )
@@ -281,20 +290,32 @@ class RaidCreation(commands.Cog):
             log_template.command_fail(ctx, logger_msgs.raid_not_found)
             return
 
-        # Its not deleted raid
-        if curr_raid.is_deleted_raid:
-            return
-
         # Stop async task if such exists for this raid
-        if curr_raid.waiting_collection_task:
-            curr_raid.waiting_collection_task.cancel()
+        guild_id = ctx.guild.id
+        if curr_raid.first_collection_task and curr_raid.first_coll_guild_id == guild_id:
+            curr_raid.first_collection_task.cancel()
+
+        # Get raid collection msg
+        raid_coll_msg = curr_raid.raid_coll_msgs.get(guild_id)
+
+        # Stop async task of collection for this guild
+        if raid_coll_msg and raid_coll_msg.coll_sleep_task:
+            curr_raid.coll_sleep_task.cancel()
+
+        raid_coll_msg = curr_raid.start_collection(guild_id, ctx.channel.id)
 
         # Send message about collection
-        collection_msg = await curr_raid.raid_msgs.send_coll_msg(ctx)
+        collection_msg = await raid_coll_msg.send_coll_msg(ctx)
         await collection_msg.add_reaction('❤')
+
+        # Start raid_time_process
+        if curr_raid.is_first_collection:
+            curr_raid.is_first_collection = False
+            asyncio.ensure_future(self.raid_time_process(ctx, curr_raid, raid_coll_msg))
 
         log_template.command_success(ctx)
 
+    async def raid_time_process(self, ctx: Context, curr_raid: Raid, raid_coll_msg: RaidMsgs):
         # Remove the time that has already passed
         curr_raid.raid_time.validate_time()
 
@@ -302,25 +323,27 @@ class RaidCreation(commands.Cog):
         asyncio.ensure_future(self.notify_about_leaving(curr_raid))
 
         raid_time = curr_raid.raid_time.time_to_display.copy()
-        for index, time_display in enumerate(raid_time):
+        for time_display in raid_time:
             curr_raid.save_raid()
 
             # Update text msg of start collection Raid
-            await curr_raid.raid_msgs.update_coll_msg(self.bot)
+            await curr_raid.update_coll_msgs(self.bot)
 
             # Wait next time to display raid table
             secs_left = curr_raid.raid_time.secs_left_to_display()
-            curr_raid.coll_sleep_task = asyncio.create_task(asyncio.sleep(secs_left))
-            await curr_raid.coll_sleep_task
+            raid_coll_msg.coll_sleep_task = asyncio.create_task(asyncio.sleep(secs_left))
+            await raid_coll_msg.coll_sleep_task
+
             curr_raid.raid_time.time_passed()
 
             # Resend new message with raid table if not first time else just send table
-            await curr_raid.raid_msgs.update_table_msg(self.bot, ctx)
+            await curr_raid.update_table_msgs(self.bot)
 
         self.database.captain.update_captain(str(ctx.author), curr_raid)
 
-        await ctx.send(messages.collection_end.format(server=curr_raid.server, captain_name=curr_raid.captain_name))
-        await self.remove_raid(ctx, captain_name, time_leaving)
+        await self.remove_raid(ctx, curr_raid.captain_name, curr_raid.raid_time.time_leaving)
+
+        await curr_raid.send_end_work_msgs(self.bot)
 
     def check_captain_registration(self, user: discord.User, captain_name: str):
         """
@@ -430,6 +453,7 @@ class RaidCreation(commands.Cog):
             reservation_count
         )
         self.raid_list.append(new_raid)
+        new_raid.start_collection(ctx.guild.id, ctx.channel.id)
 
         await ctx.send(messages.raid_created.format(time_reservation_open=time_reservation_open))
         await ctx.message.add_reaction('✔')
@@ -438,13 +462,11 @@ class RaidCreation(commands.Cog):
         # Wait time reservation open
         time_left_sec = tools.get_sec_left(time_reservation_open)
         sleep_task = asyncio.create_task(asyncio.sleep(time_left_sec))
-        new_raid.waiting_collection_task = sleep_task
+        new_raid.first_collection_task = sleep_task
         await sleep_task
 
         # Start raid collection
-        collection_task = asyncio.create_task(self.collection(ctx, captain_name, time_leaving))
-        new_raid.collection_task = sleep_task
-        await collection_task
+        await self.collection(ctx, captain_name, time_leaving)
 
     @commands.command(name=command_names.function_command.cap, help=help_text.cap)
     @commands.guild_only()

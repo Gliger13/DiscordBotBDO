@@ -49,7 +49,10 @@ class RaidJoining(commands.Cog):
             log_template.reaction(guild, channel, user, emoji, logger_msgs.no_registration)
             return
 
-        current_raid = self.raid_list.find_raid_by_coll_id(collection_msg.id)
+        current_raid = self.raid_list.find_raid_by_coll_id(guild.id, collection_msg.id)
+
+        if not current_raid:
+            return
 
         # Check user exists in raid
         if nickname in current_raid:
@@ -78,7 +81,7 @@ class RaidJoining(commands.Cog):
         self.database.user.user_joined_raid(str(user))
 
         await user.send(msg_success)
-        await current_raid.raid_msgs.update_coll_msg(self.bot)
+        await current_raid.update_coll_msgs(self.bot)
         log_template.reaction(guild, channel, user, emoji,
                               logger_msgs.raid_joining.format(captain_name=current_raid.captain_name))
 
@@ -98,7 +101,11 @@ class RaidJoining(commands.Cog):
         if str(emoji) != '❤' or user.id == settings.BOT_ID:
             return
 
-        current_raid = self.raid_list.find_raid_by_coll_id(collection_msg.id)
+        guild = collection_msg.guild
+        current_raid = self.raid_list.find_raid_by_coll_id(guild.id, collection_msg.id)
+
+        if not current_raid:
+            return
 
         nickname = self.database.user.find_user(str(user))
         if not nickname or nickname not in current_raid:
@@ -109,9 +116,8 @@ class RaidJoining(commands.Cog):
         self.database.user.user_leave_raid(str(user))
 
         await user.send(messages.raid_leave.format(captain_name=current_raid.captain_name))
-        await current_raid.raid_msgs.update_coll_msg(self.bot)
+        await current_raid.update_coll_msgs(self.bot)
 
-        guild = collection_msg.guild
         channel = collection_msg.channel
         log_template.reaction(guild, channel, user, emoji,
                               logger_msgs.raid_leaving.format(captain_name=current_raid.captain_name))
@@ -149,8 +155,9 @@ class RaidJoining(commands.Cog):
             # Add user into raid
             smaller_raid += name
 
-            if smaller_raid.raid_msgs.collection_msg_id:
-                await smaller_raid.raid_msgs.update_coll_msg(self.bot)
+            guild_id = ctx.guild.id
+            if smaller_raid.raid_coll_msgs.get(guild_id) and smaller_raid.raid_coll_msgs[guild_id].collection_msg_id:
+                await smaller_raid.update_coll_msgs(self.bot)
 
             await ctx.message.add_reaction('✔')
 
@@ -184,7 +191,7 @@ class RaidJoining(commands.Cog):
 
         # Add user into the raid
         curr_raid += name
-        await curr_raid.raid_msgs.update_coll_msg(self.bot)
+        await curr_raid.update_coll_msgs(self.bot)
 
         await ctx.message.add_reaction('✔')
         log_template.command_success(ctx)
@@ -215,7 +222,7 @@ class RaidJoining(commands.Cog):
             log_template.command_fail(ctx, logger_msgs.nope_in_raids)
         else:
             current_raid -= name
-            await current_raid.raid_msgs.update_coll_msg(self.bot)
+            await current_raid.update_coll_msgs(self.bot)
 
             await ctx.message.add_reaction('✔')
             log_template.command_success(ctx)

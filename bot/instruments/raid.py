@@ -29,16 +29,12 @@ class Raid:
         self.members_count = self.reservation_count
 
         self.table = None
-        self.raid_msgs = RaidMsgs(self)
 
-        self.guild_id = guild_id
-        self.channel_id = channel_id
+        self.raid_coll_msgs = {}
 
-        self.is_deleted_raid = False
-
-        self.waiting_collection_task = None
-        self.collection_task = None
-        self.coll_sleep_task = None
+        self.is_first_collection = True
+        self.first_coll_guild_id = guild_id
+        self.first_collection_task = None
 
         current_time = datetime.now()
         self.time_of_creation = f'{current_time.hour}-{current_time.minute}-{current_time.second}'
@@ -86,6 +82,20 @@ class Raid:
         else:
             return False
 
+    def start_collection(self, guild_id: int, channel_id: int):
+        new_raid_collection = RaidMsgs(self, guild_id, channel_id)
+        self.raid_coll_msgs[guild_id] = new_raid_collection
+        return new_raid_collection
+
+    async def update_coll_msgs(self, bot):
+        [await raid_msg.update_coll_msg(bot) for raid_msg in self.raid_coll_msgs.values()]
+
+    async def update_table_msgs(self, bot):
+        [await raid_msg.update_table_msg(bot) for raid_msg in self.raid_coll_msgs.values()]
+
+    async def send_end_work_msgs(self, bot):
+        [await raid_msg.send_end_work_msg(bot) for raid_msg in self.raid_coll_msgs.values()]
+
     def table_path(self) -> str:
         if not self.table:
             self.table = Table(self)
@@ -95,14 +105,13 @@ class Raid:
         return self.table.table_path
 
     def end_work(self):
-        self.is_deleted_raid = True
         self.save_raid()
-        if self.waiting_collection_task:
-            self.waiting_collection_task.cancel()
-        if self.collection_task:
-            self.collection_task.cancel()
-        if self.coll_sleep_task:
-            self.coll_sleep_task.cancel()
+
+        if self.first_collection_task:
+            self.first_collection_task.cancel()
+
+        [raid_msg.coll_sleep_task.cancel() for raid_msg in self.raid_coll_msgs.values() if raid_msg.coll_sleep_task]
+
         if self.raid_time.notification_task:
             self.raid_time.notification_task.cancel()
 
@@ -112,8 +121,6 @@ class Raid:
             "server": self.server,
             "time_leaving": self.raid_time.time_leaving,
             "time_reservation_open": self.raid_time.time_reservation_open,
-            "guild_id": self.guild_id,
-            "channel_id": self.channel_id,
             "reservation_count": self.reservation_count,
             "time_to_display": self.raid_time.time_to_display,
             "secs_to_display": self.raid_time.secs_to_display,
@@ -448,10 +455,16 @@ class Table:
 
 
 class RaidMsgs:
-    def __init__(self, raid: Raid):
+    def __init__(self, raid: Raid, guild_id, channel_id):
         self.raid = raid
+
         self.collection_msg_id = None
         self.table_msg_id = None
+
+        self.guild_id = guild_id
+        self.channel_id = channel_id
+
+        self.coll_sleep_task = None
 
     @property
     def collection_text(self):
@@ -461,13 +474,14 @@ class RaidMsgs:
             display_table_time=self.raid.raid_time.next_time_to_display
         )
 
-    async def _get_msg(self, bot, msg_id: id):
-        channel = bot.get_channel(self.raid.channel_id)
+    async def _get_msg(self, bot, msg_id: int):
+        channel = bot.get_channel(self.channel_id)
         message = await channel.fetch_message(msg_id)
         return message
 
-    async def _send_table_msg(self, ctx):
-        return await ctx.send(file=discord.File(self.raid.table_path()))
+    async def _send_table_msg(self, bot):
+        channel = bot.get_channel(self.channel_id)
+        return await channel.send(file=discord.File(self.raid.table_path()))
 
     async def send_coll_msg(self, ctx):
         collection_msg = await ctx.send(self.collection_text)
@@ -475,17 +489,24 @@ class RaidMsgs:
         return collection_msg
 
     async def update_coll_msg(self, bot):
-        collection_msg = await self._get_msg(bot, self.collection_msg_id)
-        await collection_msg.edit(content=self.collection_text)
+        if self.collection_msg_id:
+            collection_msg = await self._get_msg(bot, self.collection_msg_id)
+            await collection_msg.edit(content=self.collection_text)
 
-    async def update_table_msg(self, bot, ctx):
+    async def update_table_msg(self, bot):
+        print(self.table_msg_id)
+
         if not self.table_msg_id:
-            table_msg = await self._send_table_msg(ctx)
+            table_msg = await self._send_table_msg(bot)
         else:
             try:
                 table_msg = await self._get_msg(bot, self.table_msg_id)
                 await table_msg.delete()
             except NotFound:
                 pass
-            table_msg = await self._send_table_msg(ctx)
+            table_msg = await self._send_table_msg(bot)
         self.table_msg_id = table_msg.id
+
+    async def send_end_work_msg(self, bot):
+        channel = bot.get_channel(self.channel_id)
+        await channel.send(messages.collection_end.format(server=self.raid.server, captain_name=self.raid.captain_name))
