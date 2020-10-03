@@ -40,15 +40,21 @@ class RaidOverview(commands.Cog):
                 await ctx.send(messages.no_active_raids)
                 return
 
+            available_raids = [some_raid for some_raid in self.raid_list if ctx.guild.id in some_raid.raid_coll_msgs]
+            if not available_raids:
+                await ctx.send(messages.no_active_raids)
+                return
+
             # Generate information about active raids and send
             msg_of_raid = messages.active_raids_start
             for curr_raid in self.raid_list:
-                for raid_msg in curr_raid.raid_coll_msgs.values():
-                    channel = self.bot.get_channel(raid_msg.channel_id)
-                    msg_of_raid += messages.active_raid_all.format(
-                        channel_name=channel.mention, captain_name=curr_raid.captain_name,
-                        server=curr_raid.server, time_leaving=curr_raid.raid_time.time_leaving,
-                    ) + '\n'
+                if ctx.guild.id not in curr_raid.raid_coll_msgs:
+                    continue
+                channel = self.bot.get_channel(curr_raid.raid_coll_msgs[ctx.guild.id].channel_id)
+                msg_of_raid += messages.active_raid_all.format(
+                    channel_name=channel.mention, captain_name=curr_raid.captain_name,
+                    server=curr_raid.server, time_leaving=curr_raid.raid_time.time_leaving,
+                ) + '\n'
             await ctx.send(msg_of_raid)
 
         else:
