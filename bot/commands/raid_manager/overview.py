@@ -115,7 +115,7 @@ class RaidOverview(commands.Cog):
     @commands.command(name=command_names.function_command.show, help=help_text.show)
     @commands.guild_only()
     @commands.has_role('Капитан')
-    async def show(self, ctx: Context, captain_name: str, time_leaving=''):
+    async def show(self, ctx: Context, captain_name='', time_leaving=''):
         """
         Send member list of raid as image
 
@@ -129,6 +129,14 @@ class RaidOverview(commands.Cog):
 
         # Checking correct inputs arguments
         await check_input.validation(**locals())
+
+        # Get the name of the captain from db if not specified
+        if not captain_name:
+            captain_post = self.database.captain.find_captain_post(str(ctx.author))
+            if captain_post:
+                captain_name = captain_post['captain_name']
+            else:
+                return
 
         curr_raid = self.raid_list.find_raid(
             ctx.guild.id, ctx.channel.id, captain_name, time_leaving,
