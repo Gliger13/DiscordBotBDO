@@ -15,7 +15,9 @@ from commands.raid_manager import creation, manager, save_load, registration, jo
 from settings.logger import logger
 module_logger = logging.getLogger('my_bot')
 
-bot = commands.Bot(command_prefix=settings.PREFIX)
+intents = discord.Intents(messages=True, guilds=True, reactions=True, members=True)
+
+bot = commands.Bot(command_prefix=settings.PREFIX, intents=intents)
 
 # Load all commands for bot and run bot
 # if __name__ == '__main__':
