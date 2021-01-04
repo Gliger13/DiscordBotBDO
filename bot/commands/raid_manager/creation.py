@@ -125,7 +125,7 @@ class RaidCreation(commands.Cog):
 
         log_template.notify_success(current_raid.raid_time.time_leaving, amount)
 
-    async def remove_self_raid(self, ctx: Context):
+    async def remove_captain_raid(self, ctx: Context):
         captain_name = self.database.captain.get_captain_name_by_user(str(ctx.author))
 
         if not captain_name:
@@ -241,7 +241,7 @@ class RaidCreation(commands.Cog):
 
         # If no parameters than try to remove user raid.
         if not captain_name:
-            await self.remove_self_raid(ctx)
+            await self.remove_captain_raid(ctx)
             return
 
         curr_raid = self.raid_list.find_raid(ctx.guild.id, ctx.channel.id, captain_name, time_leaving)
