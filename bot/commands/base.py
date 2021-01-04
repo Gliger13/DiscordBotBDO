@@ -6,7 +6,6 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from instruments import check_input, database_process
 from messages import command_names, help_text, messages, logger_msgs
 from settings import settings
 from settings.logger import log_template
@@ -18,7 +17,6 @@ class Base(commands.Cog):
     """
     Cog that responsible for basic bot commands.
     """
-    database = database_process.DatabaseManager()
 
     def __init__(self, bot):
         self.bot = bot
@@ -29,7 +27,7 @@ class Base(commands.Cog):
         """
         Command witch does nothing. For developer and debugging.
         """
-        await check_input.validation(**locals())
+
         await ctx.message.add_reaction('❌')
         await ctx.message.add_reaction('✔')
         log_template.command_success(ctx)
