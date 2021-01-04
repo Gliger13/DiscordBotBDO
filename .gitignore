@@ -16,5 +16,8 @@ bot/saves/
 bot/images/
 bot/settings/logger/logs.log
 
+# Files by static code analysis - SonarQube
+.scannerwork/
+
 # Secrets
 bot/settings/secrets.py
