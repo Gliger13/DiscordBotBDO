@@ -5,6 +5,7 @@ import random
 from discord.ext import commands
 from discord.ext.commands import Context
 
+from instruments import database_process
 from messages import command_names, help_text, messages
 from settings.logger import log_template
 
@@ -15,6 +16,8 @@ class Fun(commands.Cog):
     """
     Cog that contain all an useless(fun) bot command
     """
+    database = database_process.DatabaseManager()
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -111,6 +114,50 @@ class Fun(commands.Cog):
 
         await channel.send(' '.join(text))
         log_template.command_success(ctx)
+
+    @commands.command(name=command_names.function_command.update_specific_roles, help=help_text.update_specific_roles)
+    @commands.guild_only()
+    @commands.is_owner()
+    async def update_specific_roles(self, ctx: Context):
+        discord_users = list(self.database.user.collection.find(
+            {
+                'entries': {'$gt': 15}
+            },
+            {
+                'discord_id': 1,
+            }
+        ))
+
+        discord_users_exists = []
+        for user in discord_users:
+            member = ctx.guild.get_member(user.get('discord_id'))
+            if member:
+                discord_users_exists.append(member)
+
+        specific_role_1 = [role for role in ctx.guild.roles if role.name == 'Бартерёнок'].pop()
+        specific_role_2 = [role for role in ctx.guild.roles if role.name == 'Бывалый бартерист'].pop()
+
+        members_with_role1 = 0
+        members_with_role2 = 0
+
+        for member in discord_users_exists:
+            if specific_role_1 in member.roles:
+                await member.remove_roles(specific_role_1)
+                await member.add_roles(specific_role_2)
+                members_with_role1 += 1
+            elif specific_role_2 not in member.roles:
+                await member.add_roles(specific_role_2)
+            else:
+                members_with_role2 += 1
+
+        message = messages.upgrade_role.format(
+            all_users=len(discord_users), exist_users=len(discord_users_exists),
+            users_get_role=len(discord_users_exists) - members_with_role2,
+            users_upgrade_role=members_with_role1
+        )
+
+        await ctx.send(message)
+        await ctx.message.add_reaction('✔')
 
 
 def setup(bot):

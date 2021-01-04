@@ -51,6 +51,7 @@ function_command = FunctionCommand({
     'judge_him': 'осуди_его',
     'say': 'скажи',
     'react': 'реакция',
+    'update_specific_roles': 'обнови_роли',
     # commands.statistics
     'user_statistics': 'стат',
     'guild_statistics': 'сервер_стат',
