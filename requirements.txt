@@ -14,9 +14,10 @@ idna==2.10
 jeepney==0.6.0
 jsonconfig-tool==1.5
 keyring==21.7.0
+motor==2.3.0
 multidict==5.1.0
 numpy==1.19.4
-opencv-python==4.2.0.34
+opencv-python==4.4.0.46
 Pillow==8.0.1
 pycparser==2.20
 pyinstaller==4.1
