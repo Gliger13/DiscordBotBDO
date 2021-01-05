@@ -84,7 +84,7 @@ class Events(commands.Cog):
         """
         Give user a role by clicking reaction on message
         """
-        guild_settings = self.database.settings.find_settings_post(payload.guild_id)
+        guild_settings = await self.database.settings.find_settings_post(payload.guild_id)
 
         if not guild_settings:
             return
@@ -114,7 +114,7 @@ class Events(commands.Cog):
         Remove the role of user by clicking reaction on message.
         """
 
-        guild_settings = self.database.settings.find_settings_post(payload.guild_id)
+        guild_settings = await self.database.settings.find_settings_post(payload.guild_id)
 
         if not guild_settings:
             return
@@ -192,23 +192,23 @@ class Events(commands.Cog):
             await joining.raid_reaction_remove(message, payload.emoji, user)
 
     async def not_notify_me(self, user):
-        nickname = self.database.user.find_user(str(user))
+        nickname = await self.database.user.find_user(str(user))
 
         if not nickname:
             return
 
-        self.database.user.notify_off(str(user))
+        await self.database.user.notify_off(str(user))
 
         await user.send(messages.notification_off)
         log_template.user_notification_on(user)
 
     async def notify_me(self, user):
-        nickname = self.database.user.find_user(str(user))
+        nickname = await self.database.user.find_user(str(user))
 
         if not nickname:
             return
 
-        self.database.user.notify_on(str(user))
+        await self.database.user.notify_on(str(user))
         await user.send(messages.notification_on)
         log_template.user_notification_off(user)
 

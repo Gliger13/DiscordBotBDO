@@ -21,8 +21,8 @@ class CaptainCollection(metaclass=MetaSingleton):
             module_logger.debug(f'Collection {settings.CAPTAIN_COLLECTION} connected.')
         return self._collection
 
-    def create_captain(self, user: str):
-        captain_name = UserCollection().find_user(user)
+    async def create_captain(self, user: str):
+        captain_name = await UserCollection().find_user(user)
         post = {
             "discord_user": user,
             "captain_name": captain_name,
@@ -31,13 +31,13 @@ class CaptainCollection(metaclass=MetaSingleton):
             "last_created": datetime.datetime.now().strftime('%H:%M %d.%m.%y'),
             "last_raids": []
         }
-        self.collection.insert_one(post)
+        await self.collection.insert_one(post)
         return post
 
-    def update_captain(self, user: str, raid: Raid):
-        captain_post = self.find_captain_post(user)
+    async def update_captain(self, user: str, raid: Raid):
+        captain_post = await self.find_captain_post(user)
         if not captain_post:
-            self.create_captain(user)
+            await self.create_captain(user)
 
         # update last raids
         last_raids = captain_post['last_raids']
@@ -74,7 +74,7 @@ class CaptainCollection(metaclass=MetaSingleton):
                 }
             )
 
-        self.collection.find_one_and_update(
+        await self.collection.find_one_and_update(
             {
                 'discord_user': user
             },
@@ -90,14 +90,14 @@ class CaptainCollection(metaclass=MetaSingleton):
             }
         )
 
-    def find_captain_post(self, user: str):
-        return self.collection.find_one({
+    async def find_captain_post(self, user: str):
+        return await self.collection.find_one({
                 'discord_user': user
         })
 
-    def get_last_raids(self, user: str):
-        captain_post = self.find_captain_post(user)
+    async def get_last_raids(self, user: str):
+        captain_post = await self.find_captain_post(user)
         return captain_post.get('last_raids')
 
-    def get_captain_name_by_user(self, user: str) -> str or None:
-        return self.find_captain_post(user).get('captain_name')
+    async def get_captain_name_by_user(self, user: str) -> str or None:
+        return (await self.find_captain_post(user)).get('captain_name')

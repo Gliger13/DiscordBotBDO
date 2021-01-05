@@ -139,7 +139,7 @@ class RaidOverview(commands.Cog):
 
         # Get the name of the captain from db if not specified
         if not captain_name:
-            captain_post = self.database.captain.find_captain_post(str(ctx.author))
+            captain_post = await self.database.captain.find_captain_post(str(ctx.author))
             if captain_post:
                 captain_name = captain_post['captain_name']
             else:

@@ -1,6 +1,6 @@
 import logging
 
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from instruments.tools import MetaSingleton
 from settings import settings
@@ -22,7 +22,7 @@ class Database(metaclass=MetaSingleton):
     def _connect(self):
         if not self._cluster:
             module_logger.debug('Initialisation database.')
-            self._cluster = MongoClient(settings.BD_STRING)[settings.CLUSTER_NAME]
+            self._cluster = AsyncIOMotorClient(settings.BD_STRING)[settings.CLUSTER_NAME]
             module_logger.debug('Database connected.')
         return self._cluster
 

@@ -119,7 +119,7 @@ class Fun(commands.Cog):
     @commands.guild_only()
     @commands.is_owner()
     async def update_specific_roles(self, ctx: Context):
-        discord_users = list(self.database.user.collection.find(
+        discord_users = list(await self.database.user.collection.find(
             {
                 'entries': {'$gt': 15}
             },

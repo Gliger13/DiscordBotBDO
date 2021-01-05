@@ -17,32 +17,32 @@ class SettingsCollection(metaclass=MetaSingleton):
             module_logger.debug(f'Collection {settings.SETTINGS_COLLECTION} connected.')
         return self._collection
 
-    def find_settings_post(self, guild_id: int) -> dict:
-        return self.collection.find_one(
+    async def find_settings_post(self, guild_id: int) -> dict:
+        return await self.collection.find_one(
             {
                 'guild_id': guild_id,
             }
         )
 
-    def new_settings(self, guild_id: int, guild: str) -> dict:
+    async def new_settings(self, guild_id: int, guild: str) -> dict:
         new_post = {
             'guild_id': guild_id,
             'guild': guild
         }
-        self.collection.insert_one(new_post)
+        await self.collection.insert_one(new_post)
         return new_post
 
-    def find_or_new(self, guild_id: int, guild: str) -> dict:
-        post = self.find_settings_post(guild_id)
+    async def find_or_new(self, guild_id: int, guild: str) -> dict:
+        post = await self.find_settings_post(guild_id)
         if post:
             return post
         else:
-            return self.new_settings(guild_id, guild)
+            return await self.new_settings(guild_id, guild)
 
-    def update_settings(self, guild_id: int, guild: str, channel_id: int, channel: str):
-        post = self.find_settings_post(guild_id)
+    async def update_settings(self, guild_id: int, guild: str, channel_id: int, channel: str):
+        post = await self.find_settings_post(guild_id)
         if not post:
-            post = self.new_settings(guild_id, guild)
+            # post = self.new_settings(guild_id, guild)
             allowed_channels = {
                 str(channel_id): channel
             }
@@ -62,22 +62,22 @@ class SettingsCollection(metaclass=MetaSingleton):
                 'can_remove_in_channels': allowed_channels
             }
         }
-        self.collection.find_one_and_update(
+        await self.collection.find_one_and_update(
             {
                 'guild_id': guild_id
             },
             update_post
         )
 
-    def can_delete_there(self, guild_id: int, channel_id: int):
-        post = self.find_settings_post(guild_id)
+    async def can_delete_there(self, guild_id: int, channel_id: int):
+        post = await self.find_settings_post(guild_id)
         if not post:
             return False
         if str(channel_id) in post.get('can_remove_in_channels'):
             return True
 
-    def not_delete_there(self, guild_id: int, channel_id: int):
-        old_post = self.find_settings_post(guild_id)
+    async def not_delete_there(self, guild_id: int, channel_id: int):
+        old_post = await self.find_settings_post(guild_id)
         if old_post:
             allowed_channel = old_post.get('can_remove_in_channels').get(str(channel_id))
             if allowed_channel:
@@ -88,10 +88,10 @@ class SettingsCollection(metaclass=MetaSingleton):
                         'can_remove_in_channels': new_allowed_channels
                     }
                 }
-                self.collection.update_one(old_post, new_post)
+                await self.collection.update_one(old_post, new_post)
 
-    def set_reaction_by_role(self, guild_id: int, guild: str, message_id: int, reaction_id: str, role_id: int):
-        old_post = self.find_or_new(guild_id, guild)
+    async def set_reaction_by_role(self, guild_id: int, guild: str, message_id: int, reaction_id: str, role_id: int):
+        old_post = await self.find_or_new(guild_id, guild)
 
         role_from_reaction = old_post.get('role_from_reaction')
         if role_from_reaction:
@@ -121,15 +121,15 @@ class SettingsCollection(metaclass=MetaSingleton):
                 }
             }
 
-        self.collection.find_one_and_update(
+        await self.collection.find_one_and_update(
             {
                 'guild_id': guild_id
             },
             update_post
         )
 
-    def remove_reaction_from_role(self, guild_id: int, reaction_id: int):
-        post = self.find_settings_post(guild_id)
+    async def remove_reaction_from_role(self, guild_id: int, reaction_id: int):
+        post = await self.find_settings_post(guild_id)
         if not post:
             return
 
@@ -152,11 +152,10 @@ class SettingsCollection(metaclass=MetaSingleton):
             }
         }
 
-        self.collection.find_one_and_update(
+        await self.collection.find_one_and_update(
             {
                 'guild_id': guild_id
             },
             update_post
         )
-
         return True

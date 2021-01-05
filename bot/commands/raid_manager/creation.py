@@ -88,7 +88,7 @@ class RaidCreation(commands.Cog):
             was_first_notified = member.get('first_notification')
             if not was_first_notified:
                 notification_msg = await user.send(messages.notification_warning)
-                self.database.user.first_notification(str(user))
+                await self.database.user.first_notification(str(user))
                 await notification_msg.add_reaction('💤')
 
         # Get secs left to notification
@@ -103,7 +103,7 @@ class RaidCreation(commands.Cog):
         current_raid.raid_time.notification_task = sleep_task
         await sleep_task
 
-        users_list = self.database.user.get_users_id(list(current_raid.member_dict.keys()))
+        users_list = await self.database.user.get_users_id(list(current_raid.member_dict.keys()))
         amount = 0
         # Send notification msg to users
         for member in users_list:
@@ -116,7 +116,7 @@ class RaidCreation(commands.Cog):
                 await first_notification(member, user)
 
         # Send notification message to the captain
-        captain_post = self.database.user.user_post_by_name(current_raid.captain_name)
+        captain_post = await self.database.user.user_post_by_name(current_raid.captain_name)
         captain = self.bot.get_user(captain_post.get('discord_id'))
         if not captain_post.get('not_notify'):
             await captain.send(messages.captain_notification)
@@ -127,7 +127,7 @@ class RaidCreation(commands.Cog):
         log_template.notify_success(current_raid.raid_time.time_leaving, amount)
 
     async def remove_captain_raid(self, ctx: Context):
-        captain_name = self.database.captain.get_captain_name_by_user(str(ctx.author))
+        captain_name = await self.database.captain.get_captain_name_by_user(str(ctx.author))
 
         if not captain_name:
             await ctx.message.add_reaction('❌')
@@ -276,7 +276,7 @@ class RaidCreation(commands.Cog):
 
         # Get the name of the captain from db if not specified
         if not captain_name:
-            captain_post = self.database.captain.find_captain_post(str(ctx.author))
+            captain_post = await self.database.captain.find_captain_post(str(ctx.author))
             if captain_post:
                 captain_name = captain_post['captain_name']
             else:
@@ -342,13 +342,13 @@ class RaidCreation(commands.Cog):
             # Resend new message with raid table if not first time else just send table
             await curr_raid.update_table_msgs(self.bot)
 
-        self.database.captain.update_captain(str(ctx.author), curr_raid)
+        await self.database.captain.update_captain(str(ctx.author), curr_raid)
 
         await self.remove_raid(ctx, curr_raid.captain_name, curr_raid.raid_time.time_leaving)
 
         await curr_raid.send_end_work_msgs(self.bot)
 
-    def check_captain_registration(self, user: discord.User, captain_name: str):
+    async def check_captain_registration(self, user: discord.User, captain_name: str):
         """
         Register captain in database if he is not registered yet
 
@@ -359,11 +359,11 @@ class RaidCreation(commands.Cog):
         captain_name: str
             game nickname of user
         """
-        nickname = self.database.user.find_user(str(user))
+        nickname = await self.database.user.find_user(str(user))
         if nickname == captain_name:
             return
         else:
-            self.database.user.rereg_user(user.id, str(user), captain_name)
+            await self.database.user.rereg_user(user.id, str(user), captain_name)
 
     async def check_raid_exists(self, ctx: Context, captain_name: str, time_leaving=''):
         """
@@ -377,9 +377,9 @@ class RaidCreation(commands.Cog):
             Time when raid leaving. Required to fill if captain has more than one raid.
         """
         # Check captain exists
-        captain_post = self.database.captain.find_captain_post(str(ctx.author))
+        captain_post = await self.database.captain.find_captain_post(str(ctx.author))
         if not captain_post:
-            self.database.captain.create_captain(str(ctx.author))
+            await self.database.captain.create_captain(str(ctx.author))
 
         # Check raid exists of this captain
         captain_raids = self.captain_raids(captain_name)
@@ -441,7 +441,7 @@ class RaidCreation(commands.Cog):
         """
         await check_input.validation(**locals())
         await self.check_raid_exists(ctx, captain_name, time_leaving)
-        self.check_captain_registration(ctx.author, captain_name)
+        await self.check_captain_registration(ctx.author, captain_name)
 
         if not time_reservation_open:
             time_reservation_open = tools.now_time_plus_minute()
@@ -485,7 +485,7 @@ class RaidCreation(commands.Cog):
         }
 
         user = str(ctx.author)
-        captain_post = self.database.captain.find_captain_post(user)
+        captain_post = await self.database.captain.find_captain_post(user)
 
         # Get parameters of old raids
         if not captain_post:

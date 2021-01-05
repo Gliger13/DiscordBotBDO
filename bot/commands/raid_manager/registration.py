@@ -35,7 +35,7 @@ class RaidRegistration(commands.Cog):
         await check_input.validation(**locals())
 
         try:
-            self.database.user.reg_user(ctx.author.id, str(ctx.author), name)
+            await self.database.user.reg_user(ctx.author.id, str(ctx.author), name)
             await ctx.message.add_reaction('✔')
             log_template.command_success(ctx)
         except UserExists:
@@ -56,7 +56,7 @@ class RaidRegistration(commands.Cog):
         # Checking correct input
         await check_input.validation(**locals())
 
-        self.database.user.rereg_user(ctx.author.id, str(ctx.author), name)
+        await self.database.user.rereg_user(ctx.author.id, str(ctx.author), name)
 
         await ctx.message.add_reaction('✔')
         log_template.command_success(ctx)

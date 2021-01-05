@@ -29,8 +29,8 @@ class UserCollection(metaclass=MetaSingleton):
             module_logger.debug(f'Collection {settings.USER_COLLECTION} connected.')
         return self._collection
 
-    def reg_user(self, discord_id: int, discord_user: str, nickname: str):
-        user_post = self.find_user_post(discord_user)
+    async def reg_user(self, discord_id: int, discord_user: str, nickname: str):
+        user_post = await self.find_user_post(discord_user)
         if not user_post:
             post = {
                 'discord_user': str(discord_user),
@@ -42,38 +42,38 @@ class UserCollection(metaclass=MetaSingleton):
         else:
             raise UserExists('A user with these credentials already exists')
 
-    def rereg_user(self, discord_id: int, discord_user: str, nickname: str):
-        user_post = self.find_user_post(discord_user)
+    async def rereg_user(self, discord_id: int, discord_user: str, nickname: str):
+        user_post = await self.find_user_post(discord_user)
         if user_post:
-            post = {
+            post = {'$set': {
                 'discord_user': str(discord_user),
                 'discord_id': discord_id,
                 'nickname': str(nickname),
                 'entries': int(user_post['entries'])
-            }
-            self.collection.update(user_post, post)
+            }}
+            await self.collection.update_one(user_post, post)
         else:
-            self.reg_user(discord_id, discord_user, nickname)
+            await self.reg_user(discord_id, discord_user, nickname)
 
-    def find_user_post(self, user: str) -> str or None:
-        post = self.collection.find_one({
+    async def find_user_post(self, user: str) -> str or None:
+        post = await self.collection.find_one({
             "discord_user": str(user)
         })
         return post
 
-    def find_user(self, user: str) -> str or None:
-        post = self.find_user_post(user)
+    async def find_user(self, user: object) -> object:
+        post = await self.find_user_post(user)
         return post['nickname'] if post else None
 
-    def find_user_post_by_name(self, name: str):
-        return self.collection.find_one(
+    async def find_user_post_by_name(self, name: str):
+        return await self.collection.find_one(
             {
                 'nickname': name
             }
         )
 
-    def user_joined_raid(self, user: str):
-        self.collection.find_one_and_update(
+    async def user_joined_raid(self, user: str):
+        await self.collection.find_one_and_update(
             {
                 'discord_user': str(user)
             },
@@ -84,8 +84,8 @@ class UserCollection(metaclass=MetaSingleton):
             }
         )
 
-    def user_leave_raid(self, user: str):
-        self.collection.find_one_and_update(
+    async def user_leave_raid(self, user: str):
+        await self.collection.find_one_and_update(
             {
                 'discord_user': str(user)
             },
@@ -96,13 +96,13 @@ class UserCollection(metaclass=MetaSingleton):
             }
         )
 
-    def user_post_by_name(self, name: str):
-        return self.collection.find_one({
+    async def user_post_by_name(self, name: str):
+        return await self.collection.find_one({
             'nickname': name
         })
 
-    def notify_off(self, user: str):
-        self.collection.find_one_and_update(
+    async def notify_off(self, user: str):
+        await self.collection.find_one_and_update(
             {
                 'discord_user': str(user)
             },
@@ -113,8 +113,8 @@ class UserCollection(metaclass=MetaSingleton):
             }
         )
 
-    def notify_on(self, user: str):
-        self.collection.find_one_and_update(
+    async def notify_on(self, user: str):
+        await self.collection.find_one_and_update(
             {
                 'discord_user': str(user)
             },
@@ -125,11 +125,11 @@ class UserCollection(metaclass=MetaSingleton):
             }
         )
 
-    def notify_status(self, user: str):
-        return self.find_user_post(user).get('notify')
+    async def notify_status(self, user: str):
+        return (await self.find_user_post(user)).get('notify')
 
-    def first_notification(self, user: str):
-        self.collection.find_one_and_update(
+    async def first_notification(self, user: str):
+        await self.collection.find_one_and_update(
             {
                 'discord_user': str(user)
             },
@@ -140,11 +140,11 @@ class UserCollection(metaclass=MetaSingleton):
             }
         )
 
-    def first_notification_status(self, user: str):
-        return self.find_user_post(user).get('first_notification')
+    async def first_notification_status(self, user: str):
+        return (await self.find_user_post(user)).get('first_notification')
 
-    def get_users_id(self, user_list):
-        post = self.collection.find(
+    async def get_users_id(self, user_list):
+        post = await self.collection.find(
             {
                 'nickname': {
                     '$in': user_list
