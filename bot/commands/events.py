@@ -5,7 +5,7 @@ import traceback
 import discord
 from discord.ext import commands
 
-from instruments import database_process
+from instruments.database.db_manager import DatabaseManager
 from messages import messages, logger_msgs
 from settings import settings
 from settings.logger import log_template
@@ -17,7 +17,7 @@ class Events(commands.Cog):
     """
     Cog that responsible for various events.
     """
-    database = database_process.DatabaseManager()
+    database = DatabaseManager()
 
     def __init__(self, bot):
         self.bot = bot

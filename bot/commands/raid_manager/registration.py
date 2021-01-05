@@ -3,7 +3,9 @@ import logging
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from instruments import check_input, database_process
+from instruments import check_input
+from instruments.database.db_manager import DatabaseManager
+from instruments.database.user_col import UserExists
 from messages import command_names, help_text, messages, logger_msgs
 from settings.logger import log_template
 
@@ -14,7 +16,7 @@ class RaidRegistration(commands.Cog):
     """
     Cog that responsible for user registration. After registration user can use reaction.
     """
-    database = database_process.DatabaseManager()
+    database = DatabaseManager()
 
     def __init__(self, bot):
         self.bot = bot
@@ -36,7 +38,7 @@ class RaidRegistration(commands.Cog):
             self.database.user.reg_user(ctx.author.id, str(ctx.author), name)
             await ctx.message.add_reaction('✔')
             log_template.command_success(ctx)
-        except database_process.UserExists:
+        except UserExists:
             await ctx.author.send(messages.already_registered)
             await ctx.message.add_reaction('❌')
             log_template.command_fail(ctx, logger_msgs.already_registered)

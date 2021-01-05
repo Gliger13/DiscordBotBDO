@@ -5,7 +5,8 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from commands.raid_manager import raid_list
-from instruments import check_input, database_process
+from instruments import check_input
+from instruments.database.db_manager import DatabaseManager
 from messages import command_names, help_text, messages, logger_msgs
 from settings.logger import log_template
 
@@ -16,7 +17,7 @@ class RaidOverview(commands.Cog):
     """
     Cog of raid manager that responsible for raid overviewing.
     """
-    database = database_process.DatabaseManager()
+    database = DatabaseManager()
     raid_list = raid_list.RaidList()
 
     def __init__(self, bot):

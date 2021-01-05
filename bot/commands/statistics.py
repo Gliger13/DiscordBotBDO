@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from instruments import database_process
+from instruments.database.db_manager import DatabaseManager
 from messages import command_names, help_text, messages
 from settings.logger import log_template
 
@@ -15,7 +15,7 @@ class Statistics(commands.Cog):
     """
     Cog that provides all collected statistics.
     """
-    database = database_process.DatabaseManager()
+    database = DatabaseManager()
 
     def __init__(self, bot):
         self.bot = bot

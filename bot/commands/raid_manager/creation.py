@@ -6,7 +6,8 @@ from discord.ext import commands
 from discord.ext.commands import Context
 
 from commands.raid_manager import raid_list
-from instruments import check_input, database_process, tools
+from instruments import check_input, tools
+from instruments.database.db_manager import DatabaseManager
 from instruments.raid.raid import Raid
 from instruments.raid.raid_coll_msg import RaidCollMsg
 from messages import command_names, help_text, messages, logger_msgs
@@ -19,7 +20,7 @@ class RaidCreation(commands.Cog):
     """
     Cog that responsible for creating and removing raids
     """
-    database = database_process.DatabaseManager()
+    database = DatabaseManager()
     raid_list = raid_list.RaidList()
 
     def __init__(self, bot):
